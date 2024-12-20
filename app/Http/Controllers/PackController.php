@@ -20,7 +20,7 @@ class PackController extends Controller
             ]);
 
             return response()->json([
-                'quantities' => $service->computeQuantity($quantity)
+                'packs' => $service->calculatePacks($quantity)
             ]);
         } catch (ValidationException $e) {
             return response()->json([

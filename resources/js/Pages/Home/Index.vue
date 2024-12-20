@@ -12,7 +12,7 @@ const props = defineProps({
 });
 
 const errorMsg = ref(null);
-const packsWithQuantity = ref([]);
+const formattedPacks = ref([]);
 
 const buyPacks = async (quantity) => {
   try {
@@ -32,27 +32,26 @@ const buyPacks = async (quantity) => {
       errorMsg.value = 'Failed to purchase packs';
       console.log(data);
     } else {
-      const quantities = data.quantities;
+      const packs = data.packs;
       const t = Object.values(
-        quantities.reduce((acc, pack) => {
-          if (!acc[pack]) {
-            acc[pack] = { pack, quantity: 0 };
+        packs.reduce((acc, { quantity }) => {
+          if (!acc[quantity]) {
+            acc[quantity] = { quantity, count: 0 };
           }
-          acc[pack].quantity += 1;
+          acc[quantity].count += 1;
           return acc;
         }, {})
       );
       t.sort((a, b) => {
-        // sort by quantity DESC
-        if (b.quantity !== a.quantity) {
-          return b.quantity - a.quantity;
+        // sort by count DESC
+        if (b.count !== a.count) {
+          return b.count - a.count;
         }
-        // sort by pack DESC
-        return b.pack - a.pack;
+        // sort by quantity DESC
+        return b.quantity - a.quantity;
       });
-      packsWithQuantity.value = t;
+      formattedPacks.value = t;
       my_modal_1.showModal();
-      console.log(packsWithQuantity);
     }
   } catch (error) {
     errorMsg.value = 'Failed to purchase packs';
@@ -69,7 +68,7 @@ const buyPacks = async (quantity) => {
         <h3 class="text-lg font-bold">Purchase successful!</h3>
         <p class="py-4">Here is what you will receive:</p>
         <ul>
-          <li v-for="item in packsWithQuantity">{{ item.pack }} x {{ item.quantity }}</li>
+          <li v-for="item in formattedPacks">{{ item.quantity }} x {{ item.count }}</li>
         </ul>
         <div class="modal-action">
           <form method="dialog">

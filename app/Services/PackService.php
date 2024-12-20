@@ -6,22 +6,67 @@ use App\Models\Pack;
 
 class PackService
 {
-    protected function findCombinationWithLeastAmountOfPacks(int $widgetsQuantity, array $packs)
+    /**
+     * Find which packs (and how many) to send back, based on the quantity of widgets we want
+     */
+    public function calculatePacks(int $widgetsQuantity): array
+    {
+        if (null !== ($pack = Pack::where('quantity', $widgetsQuantity)->first())) {
+            return [$pack];
+        }
+
+        $packs = Pack::orderBy('quantity', 'asc')->get();
+
+        $toKeep = [];
+        $fulfilled = false;
+        while ($widgetsQuantity > 0) {
+            $currentPacks = [];
+            foreach ($packs as $key => $pack) {
+                $currentPacks[] = $pack;
+                $sum = collect($currentPacks)->sum('quantity');
+                // if all the packs we went through can fulfill the requirements, let's find the most efficient way of doing so
+                if ($sum >= $widgetsQuantity) {
+                    $combinations = $this->findMostEfficientCombinationOfPacks($widgetsQuantity, $currentPacks);
+                    $toKeep = array_merge($toKeep, $combinations);
+                    $fulfilled = true;
+                    break;
+                }
+            }
+
+            // only keep the last pack if requirements not yet fulfilled (usually happening when $widgetsQuantity > max(pack.quantity))
+            if (!$fulfilled) {
+                $toKeep[] = $pack;
+            }
+            
+            $widgetsQuantity -= collect($toKeep)->sum('quantity');
+        }
+
+        return $toKeep;
+    }
+
+    /**
+     * Find the least amount of packs that can fulfill the required $widgetsQuantity
+     */
+    protected function findMostEfficientCombinationOfPacks(int $widgetsQuantity, array $packs)
     {
         $combinations = [];
         
         $total = 0;
-        $packs = array_reverse($packs);
+        $packs = collect($packs)->sortByDesc('quantity');
         $previousPack = null;
         
-        foreach ($packs as $pack) { // going on DESC
-            if ($widgetsQuantity - $pack > 0) {
+        // looping through each pack, if a pack can fulfill the $widgetsQuantity,
+        // we keep it in memory, as a smaller pack could also fit the bill.
+        // if the smaller pack cannot fulfill the $widgetsQuantity,
+        // we either take the previous one if it exists, otherwise we keep this one and keep looping
+        foreach ($packs as $pack) { // sorted DESC
+            if ($widgetsQuantity - $pack->quantity > 0) {
                 if (null !== $previousPack) {
                     $combinations[] = $previousPack;
-                    $widgetsQuantity -= $previousPack;
+                    $widgetsQuantity -= $previousPack->quantity;
                 } else {
                     $combinations[] = $pack;
-                    $widgetsQuantity -= $pack;
+                    $widgetsQuantity -= $pack->quantity;
                 }
             } else {
                 $previousPack = $pack;
@@ -33,38 +78,5 @@ class PackService
         }
 
         return $combinations;
-    }
-
-    public function computeQuantity(int $widgetsQuantity): array // @todo rename + comments
-    {
-        if (null !== ($pack = Pack::where('quantity', $widgetsQuantity)->first())) {
-            return [$pack->quantity];
-        }
-
-        $packs = Pack::orderBy('quantity', 'asc')->get();
-
-        $toKeep = [];
-        $fulfilled = false;
-        while ($widgetsQuantity > 0) {
-            $currentPacks = [];
-            foreach ($packs as $key => $pack) {
-                $currentPacks[] = $pack->quantity;
-                if (array_sum($currentPacks) >= $widgetsQuantity) {
-                    $combinations = $this->findCombinationWithLeastAmountOfPacks($widgetsQuantity, $currentPacks);
-                    $toKeep = array_merge($toKeep, $combinations);
-                    $fulfilled = true;
-                    break;
-                }
-            }
-
-            // only keep the last pack if requirements not yet fulfilled
-            if (!$fulfilled) {
-                $toKeep[] = $pack->quantity;
-            }
-            
-            $widgetsQuantity -= array_sum($toKeep);
-        }
-
-        return $toKeep;
     }
 }
