@@ -12,7 +12,7 @@ class HomeController extends Controller
     {
         return Inertia::render('Home/Index', [
             'packs' => Pack::all(),
-            'buyUrl' => route('packs.buy')
+            'buyUrl' => route('widgets.buy')
         ]);
     }
 }

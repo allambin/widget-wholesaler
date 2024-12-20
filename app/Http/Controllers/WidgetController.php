@@ -8,7 +8,7 @@ use App\Services\PackService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 
-class PackController extends Controller
+class WidgetController extends Controller
 {
     public function buy(Request $request, PackService $service): JsonResponse
     {

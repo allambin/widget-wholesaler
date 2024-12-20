@@ -14,7 +14,7 @@ class PackServiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_compute_correct_quantity_of_packs(): void
+    public function test_calcute_correct_amount_of_packs(): void
     {
         $this->seed(PackSeeder::class);
         
