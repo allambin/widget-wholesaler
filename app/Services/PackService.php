@@ -55,7 +55,7 @@ class PackService
         $packs = collect($packs)->sortByDesc('quantity');
         $previousPack = null;
         
-        // looping through each pack, if a pack can fulfill the $widgetsQuantity,
+        // looping through each pack (quanttiy DESC), if a pack can fulfill the $widgetsQuantity,
         // we keep it in memory, as a smaller pack could also fit the bill.
         // if the smaller pack cannot fulfill the $widgetsQuantity,
         // we either take the previous one if it exists, otherwise we keep this one and keep looping

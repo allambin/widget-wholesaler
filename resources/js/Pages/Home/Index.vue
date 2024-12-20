@@ -14,6 +14,27 @@ const props = defineProps({
 const errorMsg = ref(null);
 const formattedPacks = ref([]);
 
+const formatPacks = (packs) => {
+  const data = Object.values(
+    packs.reduce((acc, { quantity }) => {
+      if (!acc[quantity]) {
+        acc[quantity] = { quantity, count: 0 };
+      }
+      acc[quantity].count += 1;
+      return acc;
+    }, {})
+  );
+  data.sort((a, b) => {
+    // sort by count DESC
+    if (b.count !== a.count) {
+      return b.count - a.count;
+    }
+    // sort by quantity DESC
+    return b.quantity - a.quantity;
+  });
+  return data;
+}
+
 const buyPacks = async (quantity) => {
   try {
     const response = await fetch(props.buyUrl, {
@@ -33,25 +54,8 @@ const buyPacks = async (quantity) => {
       console.log(data);
     } else {
       const packs = data.packs;
-      const t = Object.values(
-        packs.reduce((acc, { quantity }) => {
-          if (!acc[quantity]) {
-            acc[quantity] = { quantity, count: 0 };
-          }
-          acc[quantity].count += 1;
-          return acc;
-        }, {})
-      );
-      t.sort((a, b) => {
-        // sort by count DESC
-        if (b.count !== a.count) {
-          return b.count - a.count;
-        }
-        // sort by quantity DESC
-        return b.quantity - a.quantity;
-      });
-      formattedPacks.value = t;
-      my_modal_1.showModal();
+      formattedPacks.value = formatPacks(packs);
+      modal_success.showModal();
     }
   } catch (error) {
     errorMsg.value = 'Failed to purchase packs';
@@ -63,7 +67,7 @@ const buyPacks = async (quantity) => {
 <template>
   <Layout>
     <Head title="Welcome" />
-    <dialog id="my_modal_1" class="modal">
+    <dialog id="modal_success" class="modal">
       <div class="modal-box">
         <h3 class="text-lg font-bold">Purchase successful!</h3>
         <p class="py-4">Here is what you will receive:</p>
